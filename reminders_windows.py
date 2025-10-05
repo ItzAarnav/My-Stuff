@@ -1,30 +1,29 @@
-import os
 import time
 import threading
+from win10toast import ToastNotifier
 
+"""
+For this version make sure that win10toast is downloaded!
+Download it by using the following command in terminal: pip install win10toast
+"""
 
-# --- Function to show macOS notification ---
-def show_notification(msg):
-    os.system(f'''osascript -e 'display notification "{msg}" with title "Reminder"' ''')
+toaster = ToastNotifier()
 
+def show_notification(message, title="Reminder"):
+    toaster.show_toast(title, message, duration=10)
 
-# --- Convert all time units to seconds ---
 def convert_to_seconds(seconds=0, minutes=0, hours=0, days=0, weeks=0):
     return seconds + minutes*60 + hours*3600 + days*86400 + weeks*604800
 
-
-# --- Function to handle a reminder ---
-def set_reminder(message, delay_seconds):
-    print(f"⏰ Reminder set: '{message}' (will trigger in {delay_seconds} seconds)")
-    time.sleep(delay_seconds)
+def set_reminder(message, delay):
+    print(f"⏰ Reminder set: '{message}' (in {delay} seconds)")
+    time.sleep(delay)
     show_notification(message)
     print(f"✅ Reminder shown: '{message}'")
 
-
-# --- MAIN PROGRAM ---
 if __name__ == "__main__":
     reminders = []
-    print("📋 Reminder Setup — type 'done' when finished.\n")
+    print("📋 Windows Reminder Setup — type 'done' when finished.\n")
 
     while True:
         msg = input("Enter reminder message (or 'done' to finish): ").strip()
@@ -38,7 +37,7 @@ if __name__ == "__main__":
             days = float(input("  Days: ") or 0)
             weeks = float(input("  Weeks: ") or 0)
         except ValueError:
-            print("⚠️ Please enter valid numbers for time.")
+            print("⚠️ Invalid number.")
             continue
 
         delay = convert_to_seconds(seconds, minutes, hours, days, weeks)
@@ -49,13 +48,8 @@ if __name__ == "__main__":
         reminders.append({"message": msg, "time": delay})
         print(f"✅ Reminder '{msg}' scheduled!\n")
 
-    if not reminders:
-        print("No reminders set. Exiting.")
-        exit()
-
     print(f"\n🕐 Starting {len(reminders)} reminder(s)...\n")
 
-    # Run reminders concurrently
     threads = []
     for r in reminders:
         t = threading.Thread(target=set_reminder, args=(r["message"], r["time"]))
